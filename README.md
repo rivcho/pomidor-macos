@@ -4,6 +4,12 @@ A minimal, native macOS menu bar Pomodoro timer built with Swift and SwiftUI.
 
 Pomidor lives in your menu bar — no dock icon, no clutter. Just a clean timer that helps you focus.
 
+## Download
+
+Grab the latest **DMG** (recommended) or zip from [**Releases**](https://github.com/ervinpetrisevac-jpg/pomidor-macos/releases/latest): open the DMG, drag **Pomidor** into **Applications**, then eject the disk image.
+
+Requires macOS 15 or later.
+
 ## Features
 
 - **Menu bar native** — runs entirely from the status bar, hidden from the Dock
@@ -19,6 +25,7 @@ Pomidor lives in your menu bar — no dock icon, no clutter. Just a clean timer 
 - macOS 15.0 (Sequoia) or later
 - Xcode 16.0+
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen) for project generation
+- [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`) only if you run `make distribution` or `make dmg`
 
 ## Getting Started
 
@@ -26,6 +33,21 @@ Pomidor lives in your menu bar — no dock icon, no clutter. Just a clean timer 
 
 ```bash
 brew install xcodegen
+```
+
+### Release build (zip + DMG)
+
+Produces `dist/Pomidor-<version>-macos-<arch>.zip` and `dist/Pomidor-<version>.dmg` (disk image with **Applications** shortcut). Attach both to a GitHub Release, or ship the DMG alone.
+
+```bash
+brew install create-dmg   # once
+make distribution
+```
+
+To rebuild only the DMG after changing layout or version (expects `dist/Pomidor.app`):
+
+```bash
+make dmg
 ```
 
 ### Build & Run

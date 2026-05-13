@@ -4,11 +4,15 @@ A minimal, native macOS menu bar Pomodoro timer built with Swift and SwiftUI.
 
 Pomidor lives in your menu bar — no dock icon, no clutter. Just a clean timer that helps you focus.
 
-## Download
+## Install
 
-Grab the latest **DMG** (recommended) or zip from [**Releases**](https://github.com/ervinpetrisevac-jpg/pomidor-macos/releases/latest): open the DMG, drag **Pomidor** into **Applications**, then eject the disk image.
+1. Open the [**latest release**](https://github.com/ervinpetrisevac-jpg/pomidor-macos/releases/latest) and download the **DMG**.
+2. Open the DMG, drag **Pomidor** into **Applications**, then eject the disk image.
+3. Launch **Pomidor** from Applications. The timer appears in the menu bar (no Dock icon).
 
-Requires macOS 15 or later.
+**Compatibility:** macOS 15 (Sequoia) or later.
+
+If macOS shows a warning because the app is not from the Mac App Store, open **System Settings → Privacy & Security** and choose **Open Anyway**, or right-click the app → **Open** once to confirm you trust it.
 
 ## Features
 
@@ -20,55 +24,20 @@ Requires macOS 15 or later.
 - **Lightweight** — pure Swift + SwiftUI, zero external dependencies
 - **Dark mode** — adapts automatically via native system materials
 
-## Requirements
+## Development
 
-- macOS 15.0 (Sequoia) or later
-- Xcode 16.0+
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen) for project generation
-- [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`) only if you run `make distribution` or `make dmg`
-
-## Getting Started
-
-### Install XcodeGen
+To build and run from this repository you need Xcode 16+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 
 ```bash
-brew install xcodegen
+make build          # generate project + Release build
+make generate && open Pomidor.xcodeproj   # open in Xcode
+make debug          # Debug configuration
+make clean          # remove build artifacts
 ```
 
-### Release build (zip + DMG)
+Release artifacts for GitHub (DMG + zip) are produced with `make distribution`, which expects `create-dmg` on your PATH (`brew install create-dmg`).
 
-Produces `dist/Pomidor-<version>-macos-<arch>.zip` and `dist/Pomidor-<version>.dmg` (disk image with **Applications** shortcut). Attach both to a GitHub Release, or ship the DMG alone.
-
-```bash
-brew install create-dmg   # once
-make distribution
-```
-
-To rebuild only the DMG after changing layout or version (expects `dist/Pomidor.app`):
-
-```bash
-make dmg
-```
-
-### Build & Run
-
-```bash
-# Generate Xcode project and build
-make build
-
-# Or generate and open in Xcode
-make generate
-open Pomidor.xcodeproj
-```
-
-### Development
-
-```bash
-make debug    # Debug build
-make clean    # Clean build artifacts
-```
-
-## Project Structure
+## Project structure
 
 ```
 Pomidor/
@@ -90,7 +59,7 @@ Pomidor/
 └── Theme/PomidorTheme.swift          # Design tokens
 ```
 
-## Tech Stack
+## Tech stack
 
 | Layer | Choice |
 |-------|--------|

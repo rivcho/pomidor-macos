@@ -6,7 +6,7 @@ Pomidor lives in your menu bar — no dock icon, no clutter. Just a clean timer 
 
 ## Install
 
-1. Open the [**latest release**](https://github.com/ervinpetrisevac-jpg/pomidor-macos/releases/latest) and download the **DMG**.
+1. Open the [**latest release**](https://github.com/rivcho/pomidor-macos/releases/latest) and download the **DMG**.
 2. Open the DMG, drag **Pomidor** into **Applications**, then eject the disk image.
 3. Launch **Pomidor** from Applications. The timer appears in the menu bar (no Dock icon).
 

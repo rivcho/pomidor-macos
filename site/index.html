@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Pomidor — a Pomodoro timer that lives in your Mac menu bar</title>
+<meta name="description" content="Pomidor is a free, open-source Pomodoro timer for macOS. It runs entirely from the menu bar — no Dock icon, no account, no tracking. Under 1 MB.">
+<link rel="canonical" href="https://pomidor.app/">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pomidor.app/">
+<meta property="og:title" content="Pomidor — a Pomodoro timer that lives in your Mac menu bar">
+<meta property="og:description" content="A free, open-source, native macOS Pomodoro timer. No Dock icon, no account, no tracking. Under 1 MB.">
+<meta property="og:image" content="https://pomidor.app/assets/pomidor-icon.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#FBF8F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C0B0A" media="(prefers-color-scheme: dark)">
+
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/pomidor-icon-512.png">
+
+<style>
+:root {
+  --accent: #F25C3B;
+  --accent-strong: #D9482A;
+  --green: #33B899;
+  --blue: #5C8CF0;
+
+  --bg: #FBF8F6;
+  --bg-elev: #FFFFFF;
+  --bg-sunk: #F3EEEA;
+  --text: #17130F;
+  --text-2: rgba(23, 19, 15, 0.60);
+  --text-3: rgba(23, 19, 15, 0.42);
+  --line: rgba(23, 19, 15, 0.10);
+  --line-soft: rgba(23, 19, 15, 0.06);
+  --shadow-sm: 0 1px 2px rgba(23, 19, 15, 0.06), 0 4px 14px rgba(23, 19, 15, 0.05);
+  --shadow-lg: 0 24px 70px -18px rgba(23, 19, 15, 0.28), 0 4px 14px rgba(23, 19, 15, 0.06);
+
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --maxw: 1080px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent: #FF6A45;
+    --accent-strong: #FF7F5E;
+    --green: #3FC9A8;
+    --blue: #6E9AFF;
+
+    --bg: #0C0B0A;
+    --bg-elev: #161413;
+    --bg-sunk: #121110;
+    --text: #F6F2EE;
+    --text-2: rgba(246, 242, 238, 0.62);
+    --text-3: rgba(246, 242, 238, 0.42);
+    --line: rgba(246, 242, 238, 0.13);
+    --line-soft: rgba(246, 242, 238, 0.07);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 30px 80px -20px rgba(0, 0, 0, 0.75);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 { margin: 0; letter-spacing: -0.025em; line-height: 1.1; font-weight: 640; }
+p { margin: 0; }
+a { color: inherit; }
+
+.wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: 24px; }
+
+section { padding-block: clamp(72px, 11vw, 128px); }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+  color: var(--text-2); text-transform: uppercase;
+}
+.eyebrow::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent);
+}
+
+.section-head { max-width: 620px; margin-bottom: clamp(36px, 5vw, 60px); }
+.section-head h2 { font-size: clamp(30px, 4.2vw, 44px); margin-block: 14px 14px; }
+.section-head p { color: var(--text-2); font-size: 18px; }
+
+/* ---------- Nav ---------- */
+
+header {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.25s ease;
+}
+header.stuck { border-bottom-color: var(--line); }
+
+nav { display: flex; align-items: center; gap: 28px; height: 62px; }
+
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 640; letter-spacing: -0.02em; text-decoration: none; font-size: 17px; }
+.brand img { width: 26px; height: 26px; display: block; }
+
+.nav-links { display: flex; gap: 26px; margin-left: auto; }
+.nav-links a {
+  text-decoration: none; color: var(--text-2); font-size: 15px; font-weight: 500;
+  transition: color 0.18s ease;
+}
+.nav-links a:hover { color: var(--text); }
+
+@media (max-width: 720px) { .nav-links { display: none; } nav > .btn { margin-left: auto; } }
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 13px 22px; border-radius: 999px;
+  font-size: 16px; font-weight: 590; text-decoration: none; white-space: nowrap;
+  border: 1px solid transparent; cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.btn:active { transform: scale(0.975); }
+
+.btn-primary {
+  background: var(--accent); color: #fff;
+  box-shadow: 0 6px 20px -6px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.btn-primary:hover { background: var(--accent-strong); }
+
+.btn-ghost { background: transparent; color: var(--text); border-color: var(--line); }
+.btn-ghost:hover { background: var(--bg-elev); border-color: var(--text-3); }
+
+.btn-sm { padding: 8px 16px; font-size: 14.5px; }
+
+/* ---------- Hero ---------- */
+
+.hero { position: relative; overflow: hidden; padding-top: clamp(56px, 8vw, 92px); }
+.hero::before {
+  content: ""; position: absolute; inset: -35% 0 auto; height: 720px; pointer-events: none;
+  background:
+    radial-gradient(46% 52% at 22% 42%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 68%),
+    radial-gradient(40% 46% at 78% 26%, color-mix(in srgb, var(--green) 14%, transparent), transparent 66%);
+  filter: blur(20px);
+  opacity: 0.9;
+}
+
+.hero-grid {
+  position: relative;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+  gap: clamp(40px, 6vw, 72px); align-items: center;
+}
+@media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } }
+
+.hero h1 { font-size: clamp(42px, 6.6vw, 68px); margin-block: 18px 20px; }
+.hero .lede { font-size: clamp(18px, 2.1vw, 21px); color: var(--text-2); max-width: 30em; }
+
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+
+.fineprint { margin-top: 16px; font-size: 14px; color: var(--text-3); }
+
+.badges { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 34px; padding-top: 26px; border-top: 1px solid var(--line-soft); }
+.badge { display: inline-flex; align-items: center; gap: 8px; font-size: 14.5px; color: var(--text-2); font-weight: 500; }
+.badge svg { width: 15px; height: 15px; color: var(--accent); flex: none; }
+
+/* ---------- App mockup ---------- */
+
+.stage { display: flex; justify-content: center; }
+
+.demo { width: 100%; max-width: 420px; }
+
+.menubar {
+  display: flex; align-items: center; gap: 14px;
+  height: 34px; padding-inline: 16px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--bg-elev) 86%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  font-size: 12px; color: var(--text-2);
+}
+.menubar .spacer { margin-left: auto; }
+.menubar .glyph { width: 15px; height: 15px; opacity: 0.55; }
+.menubar-item {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 7px; margin-inline: -3px; border-radius: 6px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  font-variant-numeric: tabular-nums; font-weight: 550; color: var(--text);
+}
+.menubar-item img { width: 15px; height: 15px; }
+
+/* The popover hangs from the menu bar item, the way it does on a real Mac. */
+.popover-wrap { position: relative; display: flex; justify-content: flex-end; padding-right: 26px; margin-top: 13px; }
+.popover-wrap::before {
+  content: ""; position: absolute; top: -6px; right: 141px;
+  width: 12px; height: 12px; transform: rotate(45deg);
+  background: var(--bg-elev);
+  border-left: 1px solid var(--line); border-top: 1px solid var(--line);
+  border-radius: 2px;
+}
+
+.popover {
+  width: 280px; background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.timer-body { padding: 26px 24px 18px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+.ring { position: relative; width: 160px; height: 160px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.ring .track { stroke: currentColor; opacity: 0.15; }
+.ring .value {
+  stroke: var(--session); stroke-linecap: round;
+  transition: stroke-dashoffset 0.4s ease, stroke 0.3s ease;
+}
+@media (prefers-reduced-motion: reduce) { .ring .value { transition: none; } }
+
+.ring-label {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+}
+.ring-time { font-family: var(--mono); font-size: 40px; font-weight: 300; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.ring-session { font-size: 12.5px; font-weight: 600; color: var(--session); transition: color 0.3s ease; }
+
+.dots { display: flex; gap: 7px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.18; transition: opacity 0.3s ease, background-color 0.3s ease; }
+.dots i.on { background: var(--session); opacity: 1; }
+
+.controls { display: flex; align-items: center; gap: 14px; }
+.ctrl {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: transparent; border: 1px solid var(--line);
+  color: var(--text-2); cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.ctrl:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
+.ctrl:active { transform: scale(0.92); }
+.ctrl svg { width: 15px; height: 15px; }
+.ctrl.primary { background: var(--session); border-color: transparent; color: #fff; width: 42px; height: 42px; }
+.ctrl.primary:hover { filter: brightness(1.06); background: var(--session); color: #fff; }
+.ctrl.primary svg { width: 17px; height: 17px; }
+
+.popover-footer { border-top: 1px solid var(--line-soft); padding: 6px 8px; }
+.popover-footer div {
+  display: flex; align-items: center; gap: 9px;
+  padding: 5px 8px; border-radius: 6px;
+  font-size: 12.5px; font-weight: 500; color: var(--text-2);
+}
+.popover-footer div:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.popover-footer svg { width: 13px; height: 13px; }
+
+.stage-caption { text-align: center; font-size: 13.5px; color: var(--text-3); margin-top: 16px; }
+
+/* ---------- Features ---------- */
+
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+@media (max-width: 940px) { .features { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 620px) { .features { grid-template-columns: 1fr; } }
+
+.card {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 26px 24px 28px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); border-color: color-mix(in srgb, var(--text) 18%, transparent); }
+
+.card .ico {
+  width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent); margin-bottom: 18px;
+}
+.card .ico svg { width: 19px; height: 19px; }
+.card h3 { font-size: 17.5px; margin-bottom: 8px; }
+.card p { color: var(--text-2); font-size: 15.5px; line-height: 1.55; }
+
+/* ---------- Rhythm ---------- */
+
+.rhythm { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+@media (max-width: 780px) { .rhythm { grid-template-columns: 1fr; } }
+
+.phase {
+  border: 1px solid var(--line); border-radius: var(--radius-md);
+  padding: 28px 24px; background: var(--bg-elev);
+  border-top: 3px solid var(--phase);
+}
+.phase .num { font-family: var(--mono); font-size: 40px; font-weight: 300; color: var(--phase); letter-spacing: -0.03em; }
+.phase h3 { font-size: 17px; margin-block: 8px 6px; }
+.phase p { color: var(--text-2); font-size: 15.5px; }
+
+/* ---------- Install ---------- */
+
+.install { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: step; }
+@media (max-width: 780px) { .install { grid-template-columns: 1fr; } }
+
+.step { padding: 26px 24px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg-elev); }
+.step::before {
+  counter-increment: step; content: counter(step);
+  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 14px; font-weight: 640;
+  margin-bottom: 16px;
+}
+.step h3 { font-size: 16.5px; margin-bottom: 7px; }
+.step p { color: var(--text-2); font-size: 15.5px; }
+
+.note {
+  margin-top: 20px; padding: 18px 20px; border-radius: var(--radius-md);
+  background: var(--bg-sunk); border: 1px solid var(--line-soft);
+  font-size: 15px; color: var(--text-2);
+}
+.note strong { color: var(--text); font-weight: 600; }
+
+/* ---------- FAQ ---------- */
+
+.faq { max-width: 760px; }
+details {
+  border-bottom: 1px solid var(--line);
+  padding: 20px 0;
+}
+details summary {
+  cursor: pointer; list-style: none; font-weight: 590; font-size: 17px;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+}
+details summary::-webkit-details-marker { display: none; }
+details summary::after {
+  content: ""; width: 10px; height: 10px; flex: none;
+  border-right: 1.8px solid var(--text-3); border-bottom: 1.8px solid var(--text-3);
+  transform: rotate(45deg) translateY(-2px); transition: transform 0.2s ease;
+}
+details[open] summary::after { transform: rotate(-135deg) translateY(-2px); }
+details p { color: var(--text-2); font-size: 16px; margin-top: 12px; max-width: 62ch; }
+
+/* ---------- About ---------- */
+
+.about {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 32px;
+  align-items: start; max-width: 800px;
+  padding: clamp(28px, 4vw, 40px);
+  border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--bg-elev);
+}
+.about .avatar { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; background: var(--bg-sunk); }
+.about h2 { font-size: clamp(24px, 3vw, 30px); margin-block: 12px 14px; }
+.about p { color: var(--text-2); font-size: 16.5px; }
+.about p + p { margin-top: 14px; }
+.about p a { color: var(--text); text-decoration-color: var(--text-3); text-underline-offset: 3px; }
+
+.about-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.about-links a {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 15px; border-radius: 999px;
+  border: 1px solid var(--line); text-decoration: none;
+  font-size: 14.5px; font-weight: 550;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.about-links a:hover { background: var(--bg-sunk); border-color: var(--text-3); }
+
+@media (max-width: 620px) {
+  .about { grid-template-columns: 1fr; gap: 22px; }
+}
+
+/* ---------- Closing CTA ---------- */
+
+.closing {
+  text-align: center; border-radius: var(--radius-lg);
+  border: 1px solid var(--line); background: var(--bg-elev);
+  padding: clamp(48px, 7vw, 76px) 28px;
+  background-image: radial-gradient(60% 100% at 50% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+}
+.closing img { width: 78px; height: 78px; margin-bottom: 22px; }
+.closing h2 { font-size: clamp(28px, 4vw, 40px); }
+.closing p { color: var(--text-2); margin-top: 14px; font-size: 18px; }
+.closing .cta-row { justify-content: center; }
+
+/* ---------- Footer ---------- */
+
+footer { border-top: 1px solid var(--line); padding-block: 34px 44px; }
+.foot {
+  display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center;
+  font-size: 14.5px; color: var(--text-3);
+}
+.foot a { color: var(--text-2); text-decoration: none; }
+.foot a:hover { color: var(--text); text-decoration: underline; }
+.foot .right { margin-left: auto; display: flex; gap: 22px; }
+@media (max-width: 620px) { .foot .right { margin-left: 0; } }
+
+/* ---------- Reveal ---------- */
+
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+</style>
+
+<noscript><style>.reveal { opacity: 1; transform: none; }</style></noscript>
+</head>
+
+<body>
+
+<header id="site-header">
+  <div class="wrap">
+    <nav>
+      <a class="brand" href="#top">
+        <img src="assets/favicon.svg" alt="" width="26" height="26">
+        Pomidor
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#rhythm">How it works</a>
+        <a href="#install">Install</a>
+        <a href="#about">About</a>
+        <a href="https://github.com/rivcho/pomidor-macos">GitHub</a>
+      </div>
+      <a class="btn btn-primary btn-sm" href="https://github.com/rivcho/pomidor-macos/releases/latest">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+
+      <div>
+        <span class="eyebrow">Free &amp; open source for macOS</span>
+        <h1>Focus, one tomato at a time.</h1>
+        <p class="lede">
+          Pomidor is a native Pomodoro timer that lives in your menu bar. No Dock icon,
+          no account, no clutter — just a clean ring counting down while you work.
+        </p>
+
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/rivcho/pomidor-macos/releases/latest">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v9.59l3.3-3.3a1 1 0 1 1 1.4 1.42l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.42l3.3 3.3V4a1 1 0 0 1 1-1Zm-7 15a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v1.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 20.5V19a1 1 0 0 1 1-1Z"/></svg>
+            Download for macOS
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/rivcho/pomidor-macos">
+            <svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+            View source
+          </a>
+        </div>
+
+        <p class="fineprint">Version 1.0.0 · 236 KB download · macOS 15 Sequoia or later · Apple silicon</p>
+
+        <div class="badges">
+          <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> No account, ever</span>
+          <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> No tracking, no network calls</span>
+          <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Under 1 MB installed</span>
+        </div>
+      </div>
+
+      <!-- Live product demo -->
+      <div>
+        <div class="stage">
+          <div class="demo" id="demo" style="--session: var(--accent)">
+
+            <div class="menubar">
+              <span class="spacer"></span>
+              <span class="menubar-item">
+                <img src="assets/favicon.svg" alt="">
+                <span id="menubar-time">25:00</span>
+              </span>
+              <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5.5 5.5 0 0 1 7 0M12 19.5h.01"/></svg>
+              <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="8" width="16" height="8" rx="2.4"/><path d="M20.5 11v2" stroke-linecap="round"/><rect x="4" y="10" width="10" height="4" rx="1" fill="currentColor" stroke="none"/></svg>
+              <span>9:41</span>
+            </div>
+
+            <div class="popover-wrap">
+              <div class="popover">
+                <div class="timer-body">
+
+                  <div class="ring">
+                    <svg viewBox="0 0 160 160" aria-hidden="true">
+                      <circle class="track" cx="80" cy="80" r="77" fill="none" stroke-width="6"></circle>
+                      <circle class="value" id="ring-value" cx="80" cy="80" r="77" fill="none" stroke-width="6"
+                              stroke-dasharray="483.8" stroke-dashoffset="483.8"></circle>
+                    </svg>
+                    <div class="ring-label">
+                      <span class="ring-time" id="ring-time">25:00</span>
+                      <span class="ring-session" id="ring-session">Focus</span>
+                    </div>
+                  </div>
+
+                  <div class="dots" id="dots" role="img" aria-label="Completed sessions">
+                    <i class="on"></i><i></i><i></i><i></i>
+                  </div>
+
+                  <div class="controls">
+                    <button class="ctrl" id="btn-reset" type="button" title="Reset" aria-label="Reset timer">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 4v4h4"/></svg>
+                    </button>
+                    <button class="ctrl primary" id="btn-play" type="button" title="Pause" aria-label="Play or pause timer">
+                      <svg id="icon-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="5" width="3.4" height="14" rx="1.2"/><rect x="13.6" y="5" width="3.4" height="14" rx="1.2"/></svg>
+                      <svg id="icon-play" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M8 5.6c0-.9 1-1.5 1.8-1L18 11a1.2 1.2 0 0 1 0 2l-8.2 6.4c-.8.5-1.8-.1-1.8-1V5.6Z"/></svg>
+                    </button>
+                    <button class="ctrl" id="btn-skip" type="button" title="Skip session" aria-label="Skip to next session">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 10 7-10 7V5Z" fill="currentColor"/><path d="M19 5v14"/></svg>
+                    </button>
+                  </div>
+
+                </div>
+
+                <div class="popover-footer">
+                  <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1v.3a2 2 0 1 1-4 0v-.2a1.6 1.6 0 0 0-2.8-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3.5 14H3a2 2 0 1 1 0-4h.2a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 10 3.5V3a2 2 0 1 1 4 0v.2a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7h.4a2 2 0 1 1 0 4h-.2a1.6 1.6 0 0 0-1.4 1Z"/></svg> Settings</div>
+                  <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.4 6.4a8 8 0 1 0 11.2 0"/></svg> Quit Pomidor</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <p class="stage-caption">A working demo of the real thing — press play, skip a session, watch the ring.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Features</span>
+        <h2>Everything a Pomodoro timer needs. Nothing it doesn't.</h2>
+        <p>Built in Swift and SwiftUI as a proper macOS citizen — native materials, native notifications, native dark mode.</p>
+      </div>
+
+      <div class="features">
+
+        <article class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M2.5 9h19"/><circle cx="17.5" cy="6.7" r="0.9" fill="currentColor" stroke="none"/></svg></div>
+          <h3>Lives in the menu bar</h3>
+          <p>Runs entirely from the status bar with no Dock icon and no window in your way. Glance at the remaining time without leaving what you're doing.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></div>
+          <h3>The full Pomodoro rhythm</h3>
+          <p>Twenty-five minutes of work, a five minute break, and a longer fifteen minute break after four sessions. Session dots keep track of the streak for you.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9" opacity="0.35"/><path d="M12 3a9 9 0 0 1 8.5 6"/></svg></div>
+          <h3>Progress you read at a glance</h3>
+          <p>An animated ring fills as the session runs and changes colour with the phase: red for focus, green for a short break, blue for a long one.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6.5-2 6.5h16S18 14 18 9Z"/><path d="M10.5 19.5a2 2 0 0 0 3 0"/></svg></div>
+          <h3>Native notifications</h3>
+          <p>When a session ends, macOS tells you — a real system notification with an optional sound, delivered through Notification Center like any first-party app.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg></div>
+          <h3>Yours to adjust</h3>
+          <p>Change every duration, decide whether the next session starts on its own, and switch sounds or alerts off entirely. Preferences persist between launches.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m12 12 8-4.5M12 12v9M12 12 4 7.5"/></svg></div>
+          <h3>Small and self-contained</h3>
+          <p>Pure Swift and SwiftUI with zero third-party dependencies. The entire app is under a megabyte and the source is on GitHub under the MIT license.</p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Rhythm -->
+  <section id="rhythm" style="background: var(--bg-sunk); border-block: 1px solid var(--line-soft);">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">How it works</span>
+        <h2>Work in sprints. Rest on purpose.</h2>
+        <p>The Pomodoro technique is a simple loop: a focused stretch, a short break, repeat. Pomidor keeps the loop honest so you don't have to watch the clock.</p>
+      </div>
+
+      <div class="rhythm">
+        <div class="phase reveal" style="--phase: var(--accent)">
+          <div class="num">25</div>
+          <h3>Minutes of focus</h3>
+          <p>One task, one ring. The menu bar shows the countdown so you never open a window to check.</p>
+        </div>
+        <div class="phase reveal" style="--phase: var(--green)">
+          <div class="num">05</div>
+          <h3>Minutes of short break</h3>
+          <p>Stand up, look away, refill the coffee. The ring turns green so you know at a glance you're off the clock.</p>
+        </div>
+        <div class="phase reveal" style="--phase: var(--blue)">
+          <div class="num">15</div>
+          <h3>Minutes of long break</h3>
+          <p>After four focus sessions, a longer rest. Every one of these durations is yours to change in Settings.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Install -->
+  <section id="install">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Install</span>
+        <h2>Running in about thirty seconds.</h2>
+        <p>No installer, no package manager, no sign-in. Download the disk image and drag it across.</p>
+      </div>
+
+      <div class="install">
+        <div class="step reveal">
+          <h3>Download the DMG</h3>
+          <p>Grab the latest release from GitHub — a 236 KB disk image, no strings attached.</p>
+        </div>
+        <div class="step reveal">
+          <h3>Drag to Applications</h3>
+          <p>Open the disk image, drag Pomidor into your Applications folder, then eject the image.</p>
+        </div>
+        <div class="step reveal">
+          <h3>Launch it</h3>
+          <p>Open Pomidor from Applications. A tomato appears in the menu bar — click it and start your first session.</p>
+        </div>
+      </div>
+
+      <div class="note reveal">
+        <strong>First launch on macOS.</strong> Pomidor isn't distributed through the Mac App Store, so macOS may warn you the first
+        time. Right-click the app and choose <strong>Open</strong>, or go to <strong>System Settings → Privacy &amp; Security</strong>
+        and choose <strong>Open Anyway</strong>. You only need to do this once.
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" style="padding-top: 0;">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Questions</span>
+        <h2>Good to know</h2>
+      </div>
+
+      <div class="faq reveal">
+        <details open>
+          <summary>Is Pomidor really free?</summary>
+          <p>Yes. It's free, there's no paid tier, and the complete source is published on GitHub under the MIT license. Read it, fork it, build it yourself if you'd rather.</p>
+        </details>
+        <details>
+          <summary>Does it collect any data?</summary>
+          <p>No. Pomidor has no analytics, no accounts, and makes no network requests at all. Your settings live in local user defaults on your Mac and go nowhere else.</p>
+        </details>
+        <details>
+          <summary>Which versions of macOS are supported?</summary>
+          <p>macOS 15 Sequoia or later, on Apple silicon. Pomidor uses SwiftUI's MenuBarExtra and modern system materials, which is what sets that floor.</p>
+        </details>
+        <details>
+          <summary>Can I change the durations?</summary>
+          <p>Every one of them. Focus length, short break, long break, and how many focus sessions come before a long break — all adjustable in Settings, along with auto-start, sounds, and notifications.</p>
+        </details>
+        <details>
+          <summary>Will it clutter my Dock or App Switcher?</summary>
+          <p>No. Pomidor is a menu bar accessory app, so it never appears in the Dock or Command-Tab. The menu bar item is the whole interface.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" style="padding-top: 0;">
+    <div class="wrap">
+      <div class="about reveal">
+        <img class="avatar" src="https://github.com/rivcho.png?size=240" alt="Ervin Petriševac" width="96" height="96" loading="lazy">
+        <div>
+          <span class="eyebrow">Who made this</span>
+          <h2>Hi, I'm Ervin.</h2>
+          <p>
+            I build software at <a href="https://symphony.is">Symphony</a>, and I wanted a Pomodoro timer that felt like
+            part of macOS rather than a website in a wrapper — no Electron, no account, no subscription, nothing to
+            think about once it's installed. Nothing I tried was quite that, so I wrote Pomidor in Swift and SwiftUI
+            and put the whole thing on GitHub.
+          </p>
+          <p>
+            It's a small app I use every day, and I'd like it to be useful to you too. If something is broken or
+            missing, tell me — issues and pull requests are both welcome.
+          </p>
+          <div class="about-links">
+            <a href="https://github.com/rivcho">
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+              @rivcho
+            </a>
+            <a href="https://github.com/rivcho/pomidor-macos/issues">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 20.5l1.5-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/></svg>
+              Report an issue
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing CTA -->
+  <section style="padding-top: 0;">
+    <div class="wrap">
+      <div class="closing reveal">
+        <img src="assets/favicon.svg" alt="Pomidor app icon" width="78" height="78">
+        <h2>Start your first tomato.</h2>
+        <p>Free, open source, and under a megabyte.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/rivcho/pomidor-macos/releases/latest">Download for macOS</a>
+          <a class="btn btn-ghost" href="https://github.com/rivcho/pomidor-macos">View source</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>© <span id="year">2026</span> Pomidor · MIT licensed</span>
+    <span class="right">
+      <a href="https://github.com/rivcho/pomidor-macos">GitHub</a>
+      <a href="https://github.com/rivcho/pomidor-macos/releases">Releases</a>
+      <a href="https://github.com/rivcho/pomidor-macos/issues">Report an issue</a>
+    </span>
+  </div>
+</footer>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Pomidor",
+  "applicationCategory": "ProductivityApplication",
+  "operatingSystem": "macOS 15 or later",
+  "softwareVersion": "1.0.0",
+  "url": "https://pomidor.app/",
+  "downloadUrl": "https://github.com/rivcho/pomidor-macos/releases/latest",
+  "license": "https://opensource.org/licenses/MIT",
+  "description": "A minimal, native macOS menu bar Pomodoro timer built with Swift and SwiftUI.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+
+<script>
+(function () {
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  var header = document.getElementById('site-header');
+  var onScroll = function () { header.classList.toggle('stuck', window.scrollY > 4); };
+  onScroll();
+  addEventListener('scroll', onScroll, { passive: true });
+
+  // Reveal on scroll. Anything already on screen shows immediately, so content is
+  // never left hidden if the observer doesn't fire.
+  var reveals = document.querySelectorAll('.reveal');
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (reduced || !('IntersectionObserver' in window)) {
+    reveals.forEach(function (el) { el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.08 });
+
+    reveals.forEach(function (el, i) {
+      if (el.getBoundingClientRect().top < innerHeight * 0.95) {
+        el.classList.add('in');
+      } else {
+        el.style.transitionDelay = (i % 3) * 70 + 'ms';
+        io.observe(el);
+      }
+    });
+  }
+
+  // ---- Live demo timer (mirrors the app's defaults) ----
+  var CIRCUMFERENCE = 483.8;
+  var SESSIONS = {
+    work:       { seconds: 25 * 60, label: 'Focus',       color: 'var(--accent)' },
+    shortBreak: { seconds:  5 * 60, label: 'Short break', color: 'var(--green)'  },
+    longBreak:  { seconds: 15 * 60, label: 'Long break',  color: 'var(--blue)'   }
+  };
+  var SESSIONS_BEFORE_LONG_BREAK = 4;
+
+  var demo = document.getElementById('demo');
+  var ringValue = document.getElementById('ring-value');
+  var ringTime = document.getElementById('ring-time');
+  var ringSession = document.getElementById('ring-session');
+  var menubarTime = document.getElementById('menubar-time');
+  var dots = document.getElementById('dots').children;
+  var iconPlay = document.getElementById('icon-play');
+  var iconPause = document.getElementById('icon-pause');
+  var playButton = document.getElementById('btn-play');
+
+  var type = 'work';
+  var remaining = 17 * 60 + 23; // Mid-session, so the ring reads as a real timer at first glance.
+  var completed = 1;
+  var running = true;
+  var ticker = null;
+
+  function format(total) {
+    var m = Math.floor(total / 60), s = total % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function render() {
+    var session = SESSIONS[type];
+    var progress = 1 - remaining / session.seconds;
+    demo.style.setProperty('--session', session.color);
+    ringValue.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+    ringTime.textContent = format(remaining);
+    menubarTime.textContent = format(remaining);
+    ringSession.textContent = session.label;
+    for (var i = 0; i < dots.length; i++) dots[i].classList.toggle('on', i < completed);
+    iconPlay.style.display = running ? 'none' : '';
+    iconPause.style.display = running ? '' : 'none';
+    playButton.title = running ? 'Pause' : 'Start';
+  }
+
+  function advance() {
+    if (type === 'work') {
+      completed += 1;
+      type = completed >= SESSIONS_BEFORE_LONG_BREAK ? 'longBreak' : 'shortBreak';
+    } else {
+      if (type === 'longBreak') completed = 0;
+      type = 'work';
+    }
+    remaining = SESSIONS[type].seconds;
+  }
+
+  function tick() {
+    if (!running) return;
+    remaining -= 1;
+    if (remaining <= 0) advance();
+    render();
+  }
+
+  function setRunning(next) {
+    running = next;
+    clearInterval(ticker);
+    if (running) ticker = setInterval(tick, 1000);
+    render();
+  }
+
+  playButton.addEventListener('click', function () { setRunning(!running); });
+
+  document.getElementById('btn-reset').addEventListener('click', function () {
+    remaining = SESSIONS[type].seconds;
+    render();
+  });
+
+  document.getElementById('btn-skip').addEventListener('click', function () {
+    advance();
+    render();
+  });
+
+  // Don't burn cycles while the tab is in the background.
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { clearInterval(ticker); }
+    else if (running) { ticker = setInterval(tick, 1000); }
+  });
+
+  setRunning(true);
+})();
+</script>
+
+</body>
+</html>

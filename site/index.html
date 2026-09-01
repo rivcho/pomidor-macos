@@ -358,13 +358,11 @@ details p { color: var(--text-2); font-size: 16px; margin-top: 12px; max-width: 
 /* ---------- About ---------- */
 
 .about {
-  display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 32px;
-  align-items: start; max-width: 800px;
-  padding: clamp(28px, 4vw, 40px);
+  max-width: 760px;
+  padding: clamp(28px, 4vw, 42px);
   border: 1px solid var(--line); border-radius: var(--radius-lg);
   background: var(--bg-elev);
 }
-.about .avatar { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; background: var(--bg-sunk); }
 .about h2 { font-size: clamp(24px, 3vw, 30px); margin-block: 12px 14px; }
 .about p { color: var(--text-2); font-size: 16.5px; }
 .about p + p { margin-top: 14px; }
@@ -378,11 +376,8 @@ details p { color: var(--text-2); font-size: 16px; margin-top: 12px; max-width: 
   font-size: 14.5px; font-weight: 550;
   transition: background-color 0.18s ease, border-color 0.18s ease;
 }
+.about-links a { cursor: pointer; }
 .about-links a:hover { background: var(--bg-sunk); border-color: var(--text-3); }
-
-@media (max-width: 620px) {
-  .about { grid-template-columns: 1fr; gap: 22px; }
-}
 
 /* ---------- Closing CTA ---------- */
 
@@ -689,30 +684,32 @@ footer { border-top: 1px solid var(--line); padding-block: 34px 44px; }
   <section id="about" style="padding-top: 0;">
     <div class="wrap">
       <div class="about reveal">
-        <img class="avatar" src="https://github.com/rivcho.png?size=240" alt="Ervin Petriševac" width="96" height="96" loading="lazy">
-        <div>
-          <span class="eyebrow">Who made this</span>
-          <h2>Hi, I'm Ervin.</h2>
-          <p>
-            I build software at <a href="https://symphony.is">Symphony</a>, and I wanted a Pomodoro timer that felt like
-            part of macOS rather than a website in a wrapper — no Electron, no account, no subscription, nothing to
-            think about once it's installed. Nothing I tried was quite that, so I wrote Pomidor in Swift and SwiftUI
-            and put the whole thing on GitHub.
-          </p>
-          <p>
-            It's a small app I use every day, and I'd like it to be useful to you too. If something is broken or
-            missing, tell me — issues and pull requests are both welcome.
-          </p>
-          <div class="about-links">
-            <a href="https://github.com/rivcho">
-              <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
-              @rivcho
-            </a>
-            <a href="https://github.com/rivcho/pomidor-macos/issues">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 20.5l1.5-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/></svg>
-              Report an issue
-            </a>
-          </div>
+        <span class="eyebrow">Who made this</span>
+        <h2>Hi, I'm Ervin.</h2>
+        <p>
+          I work in product at <a href="https://symphony.is">Symphony</a>, and I wanted a Pomodoro timer that felt like
+          part of macOS rather than a website in a wrapper — no Electron, no account, no subscription, nothing to
+          think about once it's installed. Nothing I tried was quite that, so I built Pomidor in Swift and SwiftUI
+          and put the whole thing on GitHub.
+        </p>
+        <p>
+          It's a small app I use every day, and I'd like it to be useful to you too. If something is broken or
+          missing, tell me — issues and pull requests are both welcome.
+        </p>
+        <div class="about-links">
+          <a href="https://github.com/rivcho">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+            @rivcho
+          </a>
+          <a href="https://github.com/rivcho/pomidor-macos/issues">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 20.5l1.5-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/></svg>
+            Report an issue
+          </a>
+          <!-- Address is assembled by script so harvesters scraping the HTML find nothing to match. -->
+          <a id="contact-mail" data-mail="ZXJ2aW4ucGV0cmlzZXZhY0BnbWFpbC5jb20=">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="m3 7 9 6 9-6"/></svg>
+            <span>Email me</span>
+          </a>
         </div>
       </div>
     </div>
@@ -770,6 +767,15 @@ footer { border-top: 1px solid var(--line); padding-block: 34px 44px; }
   var onScroll = function () { header.classList.toggle('stuck', window.scrollY > 4); };
   onScroll();
   addEventListener('scroll', onScroll, { passive: true });
+
+  // Decode the contact address only in the browser, so it never sits in the served HTML.
+  var mailLink = document.getElementById('contact-mail');
+  if (mailLink) {
+    var address = atob(mailLink.getAttribute('data-mail'));
+    mailLink.href = 'mailto:' + address;
+    mailLink.querySelector('span').textContent = address;
+    mailLink.removeAttribute('data-mail');
+  }
 
   // Reveal on scroll. Anything already on screen shows immediately, so content is
   // never left hidden if the observer doesn't fire.
